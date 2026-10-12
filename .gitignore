@@ -1,0 +1,15 @@
+node_modules/
+.npm-cache/
+dist/
+coverage/
+.env
+.env.*
+!.env.example
+.secrets/
+.data/
+backups/
+*.log
+*.tsbuildinfo
+playwright-report/
+test-results/
+.DS_Store

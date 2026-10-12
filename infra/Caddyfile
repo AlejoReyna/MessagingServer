@@ -1,0 +1,39 @@
+{$DOMAIN} {
+    header {
+        Strict-Transport-Security "max-age=31536000"
+        X-Content-Type-Options "nosniff"
+        Referrer-Policy "no-referrer"
+        X-Frame-Options "DENY"
+        Permissions-Policy "camera=(), microphone=(), geolocation=()"
+        Content-Security-Policy "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' blob:; media-src 'self' blob:; connect-src 'self' wss://{$DOMAIN}; font-src 'self'; object-src 'none'; frame-ancestors 'none'; base-uri 'self'; form-action 'self'"
+    }
+
+    @videoUpload path /api/messages/video
+    handle @videoUpload {
+        request_body {
+            max_size 51MiB
+        }
+        reverse_proxy api:3000
+    }
+
+    @api path /api /api/* /socket.io /socket.io/*
+    handle @api {
+        request_body {
+            max_size 6MB
+        }
+        reverse_proxy api:3000
+    }
+
+    handle {
+        root * /srv
+        @html path / /index.html
+        header @html Cache-Control "no-store"
+        @sw path /sw.js
+        header @sw Cache-Control "no-store"
+        @manifest path /manifest.webmanifest
+        header @manifest Cache-Control "no-store"
+        header @manifest Content-Type "application/manifest+json"
+        try_files {path} /index.html
+        file_server
+    }
+}

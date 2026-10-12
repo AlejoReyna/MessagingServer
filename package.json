@@ -1,0 +1,61 @@
+{
+  "name": "private-chat",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*",
+    "apps/*"
+  ],
+  "engines": {
+    "node": ">=24 <27",
+    "npm": ">=11"
+  },
+  "scripts": {
+    "build:contracts": "npm run build --workspace @private-chat/contracts",
+    "prisma:generate": "npm exec --workspace @private-chat/api -- prisma generate",
+    "build:api": "npm run prisma:generate && npm run build --workspace @private-chat/api",
+    "build": "npm run build:contracts && npm run build:api && npm run build --workspace @private-chat/web",
+    "dev:web": "npm run build:contracts && npm run dev --workspace @private-chat/web",
+    "dev:api": "npm run build:contracts && node scripts/dev-api.mjs",
+    "db:local": "node scripts/local-db.mjs",
+    "backup": "node scripts/backup.mjs",
+    "test:db:start": "node scripts/test-db.mjs start",
+    "test:db:stop": "node scripts/test-db.mjs stop",
+    "test:runtime": "node --import tsx --test --test-concurrency=1 scripts/integration/*.test.mjs",
+    "verify:local": "node scripts/test-db.mjs verify",
+    "check:foundation": "npm run build:contracts && npm run test --workspace @private-chat/contracts && node --test scripts/test/*.test.mjs",
+    "typecheck": "npm run build:contracts && npm run prisma:generate && npm run typecheck --workspaces",
+    "verify": "node scripts/verify.mjs",
+    "secrets:init": "node scripts/init-secrets.mjs",
+    "infra:check": "node scripts/check-infra.mjs",
+    "assets:generate": "node scripts/generate-public-assets.mjs",
+    "check:public": "node scripts/check-public.mjs"
+  },
+  "devDependencies": {
+    "@types/node": "^24.0.0",
+    "node-addon-api": "8.9.2",
+    "node-gyp": "13.1.0",
+    "sharp": "0.35.5",
+    "typescript": "5.9.3",
+    "yaml": "^2.8.1"
+  },
+  "overrides": {
+    "sharp": "0.35.5",
+    "deepmerge-ts": "8.0.0",
+    "mysql2": "3.24.5"
+  },
+  "allowScripts": {
+    "sharp@0.34.0": true,
+    "argon2@0.44.0": true,
+    "prisma@7.10.0": true,
+    "@prisma/engines@7.10.0": true,
+    "esbuild@0.28.2": true,
+    "fsevents@2.3.3": true
+  },
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/AlejoReyna/MessagingServer.git"
+  }
+}

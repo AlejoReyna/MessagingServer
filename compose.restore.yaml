@@ -1,0 +1,68 @@
+name: private-chat-recovery
+services:
+  restore-postgres:
+    image: postgres:18-bookworm
+    environment:
+      POSTGRES_DB: private_chat_restore
+      POSTGRES_USER: private_chat_owner
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_owner_password
+    secrets: [db_owner_password]
+    volumes: ["recovery_data:/var/lib/postgresql"]
+    networks: [recovery]
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U private_chat_owner -d private_chat_restore"]
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  restore-loader:
+    image: postgres:18-bookworm
+    environment:
+      PGHOST: restore-postgres
+      PGPORT: "5432"
+      PGDATABASE: private_chat_restore
+      PGUSER: private_chat_owner
+    secrets: [db_owner_password]
+    volumes:
+      - ./.data/restore/staging/database.dump:/recovery/database.dump:ro
+      - ./infra/restore.sh:/recovery/restore.sh:ro
+    networks: [recovery]
+    depends_on:
+      restore-postgres: {condition: service_healthy}
+    entrypoint: [bash, /recovery/restore.sh]
+    tmpfs: ["/tmp:rw,nosuid,noexec,size=64m"]
+
+  restore-reconcile:
+    image: private-chat-api-tools:local
+    environment:
+      APP_ENV: production
+      APP_ORIGIN: https://${DOMAIN:?Configura DOMAIN en .env}
+      DATABASE_HOST: restore-postgres
+      DATABASE_PORT: "5432"
+      DATABASE_NAME: private_chat_restore
+      DATABASE_USER: private_chat_owner
+      DATABASE_PASSWORD_FILE: /run/secrets/db_owner_password
+      COOKIE_SECRET_FILE: /run/secrets/cookie_secret
+      CSRF_SECRET_FILE: /run/secrets/csrf_secret
+      UPLOAD_DIR: /tmp/recovery-uploads
+      DELETION_JOURNAL_PATH: /journal/deletions.jsonl
+      RECOVERY_MODE: "true"
+    secrets: [db_owner_password, cookie_secret, csrf_secret]
+    volumes: ["current_deletion_journal:/journal:ro"]
+    networks: [recovery]
+    depends_on:
+      restore-postgres: {condition: service_healthy}
+    command: [npm, run, "db:reconcile-deletions", --workspace, "@private-chat/api"]
+    user: "10001:10001"
+
+networks:
+  recovery: {internal: true}
+volumes:
+  recovery_data: {}
+  current_deletion_journal:
+    external: true
+    name: ${DELETION_JOURNAL_VOLUME:-private-chat_deletion_journal}
+secrets:
+  db_owner_password: {file: ./.secrets/db_owner_password}
+  cookie_secret: {file: ./.secrets/cookie_secret}
+  csrf_secret: {file: ./.secrets/csrf_secret}

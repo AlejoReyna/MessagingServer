@@ -1,0 +1,201 @@
+@import "tailwindcss";
+@import "./themes.css";
+
+@font-face {
+  font-family: "Patrick Hand";
+  src: url("./assets/fonts/PatrickHand-Regular.ttf") format("truetype");
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+}
+
+@theme {
+  --color-canvas: #f3f3f1;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f6f6f4;
+  --color-surface-hover: #ededea;
+  --color-line: #deded9;
+  --color-ink: #242624;
+  --color-muted: #636761;
+  --color-subtle: #72766f;
+  --color-accent: #343934;
+  --color-accent-hover: #242824;
+  --color-accent-soft: #e5e8e2;
+  --color-on-accent: #ffffff;
+  --color-success: #3d7251;
+  --color-danger: #b42336;
+  --color-danger-hover: #8f1c2c;
+  --color-on-danger: #ffffff;
+  --color-overlay: #202420;
+  --shadow-panel: 0 8px 30px rgb(32 36 32 / 0.04);
+  --shadow-dialog: 0 16px 48px rgb(32 36 32 / 0.12);
+  --font-sans: "Patrick Hand", "Segoe Print", "Bradley Hand", cursive;
+}
+
+html, body {
+  height: 100%;
+  margin: 0;
+  overscroll-behavior: none;
+  /* Match the navbar where iOS paints the status bar and viewport edges. */
+  background: var(--color-surface);
+}
+
+body {
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+#root {
+  min-height: 100dvh;
+  background: var(--color-canvas);
+}
+
+.chat-header {
+  padding-top: max(1rem, env(safe-area-inset-top));
+}
+
+.chat-footer {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
+/* Foco visible accesible */
+:where(a, button, input, textarea, [tabindex]):focus-visible {
+  outline: 3px solid var(--color-accent);
+  outline-offset: 2px;
+  border-radius: 12px;
+}
+
+/* Respeto a movimiento reducido */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+.chat-scroll {
+  scrollbar-width: thin;
+  scrollbar-color: var(--color-line) transparent;
+}
+.chat-scroll::-webkit-scrollbar { width: 8px; }
+.chat-scroll::-webkit-scrollbar-thumb { background: var(--color-line); border-radius: 999px; }
+
+.chat-empty-face {
+  width: clamp(10rem, 24vw, 15rem);
+  max-width: 70vw;
+  height: auto;
+  color: var(--color-line);
+  color: color-mix(in srgb, var(--color-surface-muted) 75%, var(--color-ink));
+}
+
+.chat-empty-caption {
+  font-size: 0.9375rem;
+  font-weight: 400;
+  letter-spacing: 0.04em;
+  line-height: 1.4;
+}
+
+.avatar-lightbox {
+  background: rgb(0 0 0 / 0.93);
+  color-scheme: dark;
+}
+
+.avatar-preview {
+  width: min(70vw, 440px, 52dvh);
+  height: min(70vw, 440px, 52dvh);
+}
+
+.name-edit-icon {
+  color: #ffffff;
+  background: #24292f;
+}
+
+@media (hover: none) {
+  .name-edit-icon { opacity: 1; }
+  .message-menu-trigger { opacity: 1; }
+}
+
+@media (hover: hover) {
+  .message-menu-trigger { opacity: 0; }
+  .group:hover .message-menu-trigger,
+  .group:focus-within .message-menu-trigger,
+  .message-menu-trigger:focus-visible,
+  .message-menu-trigger[aria-expanded="true"] { opacity: 1; }
+}
+
+/* Resaltado breve al saltar a la cita original. */
+.reply-flash { outline: 2px solid var(--color-accent); outline-offset: 2px; }
+
+/* Movimiento tipo WhatsApp: sólo transform + opacidad (60fps, sin layout thrash). */
+:root {
+  --ease-chat: cubic-bezier(0.2, 0, 0, 1);
+  --dur-pop: 240ms;
+  --dur-fade: 200ms;
+}
+
+@keyframes msg-in-mine {
+  from { opacity: 0; transform: translateY(12px) translateX(10px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) translateX(0) scale(1); }
+}
+@keyframes msg-in-theirs {
+  from { opacity: 0; transform: translateY(12px) translateX(-10px) scale(0.96); }
+  to { opacity: 1; transform: translateY(0) translateX(0) scale(1); }
+}
+@keyframes fade-slide-up {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes fade-slide-down {
+  from { opacity: 0; transform: translateY(-8px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+@keyframes typing-dot {
+  0%, 60%, 100% { transform: translateY(0); opacity: 0.45; }
+  30% { transform: translateY(-4px); opacity: 1; }
+}
+@keyframes tick-pop {
+  0% { opacity: 0; transform: scale(0.5); }
+  100% { opacity: 1; transform: scale(1); }
+}
+@keyframes status-pop {
+  0% { transform: scale(0.4); }
+  70% { transform: scale(1.15); }
+  100% { transform: scale(1); }
+}
+@keyframes gate-shake {
+  0%, 100% { transform: translateX(0); }
+  20% { transform: translateX(-8px); }
+  40% { transform: translateX(8px); }
+  60% { transform: translateX(-5px); }
+  80% { transform: translateX(5px); }
+}
+/* Sacudida de error en la puerta de acceso y el cambio de código. */
+.shake { animation: gate-shake 300ms var(--ease-chat); }
+
+/* Entrada de burbujas nuevas (el historial no usa estas clases). */
+.enter-pop-mine {
+  animation: msg-in-mine var(--dur-pop) var(--ease-chat) both;
+  transform-origin: bottom right;
+}
+.enter-pop-theirs {
+  animation: msg-in-theirs var(--dur-pop) var(--ease-chat) both;
+  transform-origin: bottom left;
+}
+/* Apariciones suaves: separadores de día, estado vacío, burbuja de escritura. */
+.enter-up { animation: fade-slide-up var(--dur-fade) var(--ease-chat) both; }
+/* Avisos que descienden: notice, píldora de reconexión. */
+.enter-down { animation: fade-slide-down var(--dur-fade) var(--ease-chat) both; }
+/* Cambio enviado → leído. */
+.tick-pop { animation: tick-pop 180ms var(--ease-chat) both; display: inline-flex; }
+/* Punto de presencia al cambiar en línea / desconectado. */
+.status-pop { animation: status-pop 220ms var(--ease-chat) both; }
+
+/* Indicador de escritura: tres puntos rebotando como en WhatsApp. */
+.typing-dot {
+  display: inline-block;
+  animation: typing-dot 1.2s ease-in-out infinite;
+}
+.typing-dot:nth-child(2) { animation-delay: 0.15s; }
+.typing-dot:nth-child(3) { animation-delay: 0.3s; }

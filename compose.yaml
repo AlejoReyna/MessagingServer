@@ -1,0 +1,174 @@
+name: private-chat
+
+x-api-environment: &api-environment
+  APP_ENV: production
+  APP_ORIGIN: https://${DOMAIN:?Configura DOMAIN en .env}
+  HOST: 0.0.0.0
+  PORT: "3000"
+  DATABASE_HOST: private-chat-postgres
+  DATABASE_PORT: "5432"
+  DATABASE_NAME: private_chat
+  DATABASE_USER: private_chat_app
+  DATABASE_PASSWORD_FILE: /run/secrets/db_app_password
+  COOKIE_SECRET_FILE: /run/secrets/cookie_secret
+  CSRF_SECRET_FILE: /run/secrets/csrf_secret
+  UPLOAD_DIR: /data/uploads
+  DELETION_JOURNAL_PATH: /data/journal/deletions.jsonl
+  ADMIN_USERNAME: ${ADMIN_USERNAME:-admin}
+  PARTNER_USERNAME: ${PARTNER_USERNAME:-member}
+  GUEST_SETUP_SECRET_FILE: /run/secrets/guest_setup_secret
+  VAPID_PUBLIC_KEY: ${VAPID_PUBLIC_KEY:-}
+  VAPID_SUBJECT: ${VAPID_SUBJECT:-}
+  VAPID_PRIVATE_KEY_FILE: /run/secrets/vapid_private_key
+
+services:
+  postgres:
+    image: postgres:18-bookworm
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: private_chat
+      POSTGRES_USER: private_chat_owner
+      POSTGRES_PASSWORD_FILE: /run/secrets/db_owner_password
+    secrets: [db_owner_password, db_app_password]
+    volumes:
+      - postgres_data:/var/lib/postgresql
+      - ./infra/postgres/01-init.sh:/docker-entrypoint-initdb.d/01-init.sh:ro
+    networks:
+      database:
+        aliases: [private-chat-postgres]
+    healthcheck:
+      test: [CMD-SHELL, "pg_isready -U private_chat_owner -d private_chat"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+    logging:
+      driver: json-file
+      options: {max-size: 10m, max-file: "3"}
+
+  storage-init:
+    image: busybox:1.37
+    user: "0:0"
+    command: [sh, -c, "chown 10001:10001 /data/uploads /data/journal && chmod 700 /data/uploads /data/journal"]
+    volumes: ["uploads:/data/uploads", "deletion_journal:/data/journal"]
+    network_mode: none
+    restart: "no"
+
+  api:
+    image: private-chat-api:local
+    build:
+      context: .
+      dockerfile: infra/api.Dockerfile
+      target: runtime
+    environment: *api-environment
+    secrets: [db_app_password, cookie_secret, csrf_secret, guest_setup_secret, vapid_private_key]
+    volumes: ["uploads:/data/uploads", "deletion_journal:/data/journal"]
+    networks: [edge, database]
+    depends_on:
+      postgres: {condition: service_healthy}
+      storage-init: {condition: service_completed_successfully}
+    restart: unless-stopped
+    init: true
+    user: "10001:10001"
+    read_only: true
+    tmpfs: ["/tmp:rw,noexec,nosuid,size=192m"]
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    healthcheck:
+      test: [CMD, node, -e, "fetch('http://127.0.0.1:3000/api/ready').then(r=>process.exit(r.ok?0:1)).catch(()=>process.exit(1))"]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    logging:
+      driver: json-file
+      options: {max-size: 10m, max-file: "3"}
+
+  web:
+    image: private-chat-web:local
+    build: {context: ., dockerfile: infra/web.Dockerfile}
+    environment: {DOMAIN: "${DOMAIN:?Configura DOMAIN en .env}"}
+    volumes: ["caddy_data:/data", "caddy_config:/config"]
+    ports: ["80:80", "443:443", "443:443/udp"]
+    networks: [edge]
+    depends_on:
+      api: {condition: service_healthy}
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options: {max-size: 10m, max-file: "3"}
+
+  bootstrap:
+    image: private-chat-api-tools:local
+    build: {context: ., dockerfile: infra/api.Dockerfile, target: tools}
+    profiles: [tools]
+    environment:
+      <<: *api-environment
+      ADMIN_DISPLAY_NAME: ${ADMIN_DISPLAY_NAME:-Administrador}
+      MEMBER_DISPLAY_NAME: ${MEMBER_DISPLAY_NAME:-Miembro}
+      ADMIN_PIN_FILE: /run/secrets/admin_pin
+      DATABASE_USER: private_chat_owner
+      DATABASE_PASSWORD_FILE: /run/secrets/db_owner_password
+      RUNTIME_PASSWORD_FILE: /run/secrets/db_app_password
+    secrets: [db_owner_password, db_app_password, cookie_secret, csrf_secret, admin_pin]
+    volumes: ["uploads:/data/uploads", "deletion_journal:/data/journal"]
+    networks: [database]
+    depends_on:
+      postgres: {condition: service_healthy}
+      storage-init: {condition: service_completed_successfully}
+    stdin_open: true
+    tty: true
+    init: true
+    user: "10001:10001"
+    command: [node, scripts/bootstrap.mjs]
+
+  backup:
+    image: private-chat-backup:local
+    build: {context: ., dockerfile: infra/backup.Dockerfile}
+    profiles: [ops]
+    environment:
+      PGHOST: postgres
+      PGPORT: "5432"
+      PGDATABASE: private_chat
+      PGUSER: private_chat_owner
+      RESTIC_PASSWORD_FILE: /run/secrets/backup_password
+      RESTIC_REPOSITORY_FILE: /run/secrets/backup_repository
+      RESTIC_CACHE_DIR: /tmp/restic-cache
+    secrets: [db_owner_password, backup_password, backup_repository]
+    volumes:
+      - uploads:/source/uploads:ro
+      - deletion_journal:/source/journal:ro
+      - ./.secrets/backup-ssh:/root/.ssh:ro
+      - ./.data/restore:/restore
+    networks: [database, backup_outbound]
+    depends_on:
+      postgres: {condition: service_healthy}
+    tmpfs: ["/staging:rw,nosuid,noexec,size=256m", "/tmp:rw,nosuid,noexec,size=256m"]
+    command: [backup]
+
+networks:
+  edge: {}
+  database: {internal: true}
+  backup_outbound: {}
+
+volumes:
+  postgres_data: {}
+  uploads: {}
+  deletion_journal: {}
+  caddy_data: {}
+  caddy_config: {}
+
+secrets:
+  db_owner_password: {file: ./.secrets/db_owner_password}
+  db_app_password: {file: ./.secrets/db_app_password}
+  cookie_secret: {file: ./.secrets/cookie_secret}
+  csrf_secret: {file: ./.secrets/csrf_secret}
+  backup_password: {file: ./.secrets/backup_password}
+  backup_repository: {file: ./.secrets/backup_repository}
+  # Acceso con PIN v2 (contrato v2). Los crea el operador a mano; init-secrets
+  # no los genera porque no son hex aleatorios (PIN de 4 dígitos y respuesta).
+  admin_pin: {file: ./.secrets/admin_pin}
+  guest_setup_secret: {file: ./.secrets/guest_setup_secret}
+  # Web Push VAPID (contrato v5, opcional). La privada se genera con
+  # scripts/generate-vapid.mjs y nunca va al repo; la pública y el asunto van
+  # por variables de entorno (.env, sin secretos).
+  vapid_private_key: {file: ./.secrets/vapid_private_key}

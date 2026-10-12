@@ -1,0 +1,143 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  schemas  = ["chat"]
+}
+
+model User {
+  id                String    @id @db.Text
+  slot              Int       @db.SmallInt
+  username          String    @unique @db.Text
+  displayName       String    @map("display_name") @db.Text
+  role              String    @db.Text
+  passwordHash      String    @map("password_hash") @db.Text
+  // Acceso con PIN v2: hash Argon2id del código de 4 dígitos, contador de
+  // fallos y bloqueo temporal. NULL = PIN sin definir (invitado sin alta).
+  pinHash           String?   @map("pin_hash") @db.Text
+  pinFailedAttempts Int       @default(0) @map("pin_failed_attempts")
+  pinLockedUntil    DateTime? @map("pin_locked_until") @db.Timestamptz(6)
+  avatarPath        String?   @map("avatar_path") @db.Text
+  avatarVersion     Int       @default(0) @map("avatar_version")
+  mustChangePassword Boolean  @default(true) @map("must_change_password")
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt         DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  sessions Session[]
+  messages Message[] @relation("SentMessages")
+  receipts ReadReceipt[]
+  audits   DeletionAudit[] @relation("AuditActor")
+  pushSubscriptions PushSubscription[]
+
+  @@schema("chat")
+  @@map("users")
+}
+
+model Session {
+  id         String    @id @db.Text
+  tokenHash  String    @unique @map("token_hash") @db.Text
+  userId     String    @map("user_id") @db.Text
+  user       User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt  DateTime  @default(now()) @map("created_at") @db.Timestamptz(6)
+  expiresAt  DateTime  @map("expires_at") @db.Timestamptz(6)
+  revokedAt  DateTime? @map("revoked_at") @db.Timestamptz(6)
+  lastSeenAt DateTime  @default(now()) @map("last_seen_at") @db.Timestamptz(6)
+
+  @@index([userId])
+  @@schema("chat")
+  @@map("sessions")
+}
+
+model Conversation {
+  id           Int      @id @db.SmallInt
+  version      Int      @default(1)
+  lastSequence Int      @default(0) @map("last_sequence")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt    DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  messages Message[]
+
+  @@schema("chat")
+  @@map("conversation")
+}
+
+model Message {
+  id              String       @id @db.Text
+  conversationId  Int          @map("conversation_id") @db.SmallInt
+  conversation    Conversation @relation(fields: [conversationId], references: [id])
+  senderId        String       @map("sender_id") @db.Text
+  sender          User         @relation("SentMessages", fields: [senderId], references: [id])
+  clientMessageId String       @map("client_message_id") @db.Text
+  sequence        Int
+  body            String       @db.Text
+  photoData       Bytes?       @map("photo_data")
+  photoHash       String?      @map("photo_hash") @db.Text
+  videoData       Bytes?       @map("video_data")
+  videoHash       String?      @map("video_hash") @db.Text
+  replyToMessageId String?     @map("reply_to_message_id") @db.Text
+  createdAt       DateTime     @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@unique([senderId, clientMessageId])
+  @@unique([conversationId, sequence])
+  @@index([conversationId, sequence])
+  @@index([replyToMessageId])
+  @@schema("chat")
+  @@map("messages")
+}
+
+model ReadReceipt {
+  userId          String    @id @map("user_id") @db.Text
+  user            User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  lastReadSequence Int      @default(0) @map("last_read_sequence")
+  readAt          DateTime? @map("read_at") @db.Timestamptz(6)
+  updatedAt       DateTime  @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@schema("chat")
+  @@map("read_receipts")
+}
+
+model DeletionAudit {
+  id                 String   @id @db.Text
+  actorId            String   @map("actor_id") @db.Text
+  actor              User     @relation("AuditActor", fields: [actorId], references: [id])
+  action             String   @db.Text
+  messageId          String?  @map("message_id") @db.Text
+  conversationVersion Int     @map("conversation_version")
+  createdAt          DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+
+  @@index([actorId])
+  @@schema("chat")
+  @@map("deletion_audit")
+}
+
+model MessageTombstone {
+  messageId           String   @id @map("message_id") @db.Text
+  senderId            String   @map("sender_id") @db.Text
+  clientMessageId     String   @map("client_message_id") @db.Text
+  conversationVersion Int      @map("conversation_version")
+  deletedAt           DateTime @default(now()) @map("deleted_at") @db.Timestamptz(6)
+
+  @@unique([senderId, clientMessageId])
+  @@schema("chat")
+  @@map("message_tombstones")
+}
+
+// Suscripciones Web Push (contrato v5): un endpoint por dispositivo/navegador.
+// El push es vacío (sin texto): sólo despierta al service worker, que muestra
+// el aviso genérico. Nunca se guarda contenido de mensajes aquí.
+model PushSubscription {
+  id        String   @id @db.Text
+  userId    String   @map("user_id") @db.Text
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint  String   @unique @db.Text
+  p256dh    String   @db.Text
+  auth      String   @db.Text
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz(6)
+  updatedAt DateTime @default(now()) @updatedAt @map("updated_at") @db.Timestamptz(6)
+
+  @@index([userId])
+  @@schema("chat")
+  @@map("push_subscriptions")
+}

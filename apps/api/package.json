@@ -1,0 +1,38 @@
+{
+  "name": "@private-chat/api",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc -p tsconfig.json",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "test": "node --import tsx --test test/unit/*.test.ts",
+    "test:integration": "node --import tsx --test --test-concurrency=1 test/integration/*.test.ts",
+    "db:migrate": "prisma migrate deploy",
+    "db:seed": "tsx src/cli/seed.ts",
+    "db:grant": "tsx src/cli/grant.ts",
+    "db:reconcile-deletions": "tsx src/cli/reconcile-deletions.ts"
+  },
+  "dependencies": {
+    "@private-chat/contracts": "0.1.0",
+    "fastify": "5.12.5",
+    "@fastify/cookie": "^11.0.0",
+    "@fastify/csrf-protection": "^7.1.0",
+    "@fastify/rate-limit": "^10.3.0",
+    "@fastify/multipart": "^9.3.0",
+    "@fastify/helmet": "^13.0.0",
+    "socket.io": "^4.8.1",
+    "argon2": "^0.44.0",
+    "sharp": "^0.34.0",
+    "@prisma/client": "7.10.0",
+    "@prisma/adapter-pg": "7.10.0",
+    "pg": "^8.16.0"
+  },
+  "devDependencies": {
+    "prisma": "7.10.0",
+    "tsx": "^4.20.0",
+    "@types/pg": "^8.15.0"
+  },
+  "license": "MIT"
+}

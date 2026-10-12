@@ -1,0 +1,221 @@
+/* Paletas adaptadas de sus proyectos originales; fuentes en docs/THEMES.md. */
+
+:root, [data-theme="github-light"] {
+  color-scheme: light;
+  --color-canvas: #f6f8fa;
+  --color-surface: #ffffff;
+  --color-surface-muted: #f6f8fa;
+  --color-surface-hover: #eaeef2;
+  --color-line: #d0d7de;
+  --color-ink: #1f2328;
+  --color-muted: #59636e;
+  --color-accent: #24292f;
+  --color-accent-hover: #1f2328;
+  --color-accent-soft: #eaeef2;
+  --color-on-accent: #ffffff;
+  --color-success: #176b30;
+  --color-danger: #b42336;
+  --color-danger-hover: #8f1c2c;
+  --color-on-danger: #ffffff;
+  --color-subtle: var(--color-muted);
+}
+
+[data-theme="github-dark"] {
+  color-scheme: dark;
+  --color-canvas: #010409;
+  --color-surface: #161b22;
+  --color-surface-muted: #0d1117;
+  --color-surface-hover: #21262d;
+  --color-line: #30363d;
+  --color-ink: #e6edf3;
+  --color-muted: #9da7b3;
+  --color-accent: #58a6ff;
+  --color-accent-hover: #79c0ff;
+  --color-accent-soft: #212f43;
+  --color-on-accent: #0d1117;
+  --color-success: #7ee787;
+  --color-danger: #ff7b72;
+  --color-danger-hover: #ffa198;
+  --color-on-danger: #0d1117;
+  --color-subtle: var(--color-muted);
+}
+
+[data-theme="cocoa"] {
+  color-scheme: light;
+  --color-canvas: #f2e9df;
+  --color-surface: #fffaf5;
+  --color-surface-muted: #f2e9df;
+  --color-surface-hover: #e9d9ca;
+  --color-line: #d6c2af;
+  --color-ink: #38291f;
+  --color-muted: #765b48;
+  --color-accent: #80543a;
+  --color-accent-hover: #69432f;
+  --color-accent-soft: #ead8c7;
+  --color-on-accent: #fffaf5;
+  --color-success: #3f6b4b;
+  --color-danger: #a83d36;
+  --color-danger-hover: #862f29;
+  --color-on-danger: #fffaf5;
+  --color-subtle: var(--color-muted);
+}
+
+[data-theme="catppuccin-latte"] {
+  color-scheme: light;
+  --color-canvas: #e6e9ef;
+  --color-surface: #eff1f5;
+  --color-surface-muted: #e6e9ef;
+  --color-surface-hover: #dce0e8;
+  --color-line: #bcc0cc;
+  --color-ink: #4c4f69;
+  --color-muted: #5c5f77;
+  --color-accent: #8839ef;
+  --color-accent-hover: #7328d5;
+  --color-accent-soft: #dce0e8;
+  --color-on-accent: #ffffff;
+  --color-success: #326523;
+  --color-danger: #d20f39;
+  --color-danger-hover: #ae0c30;
+  --color-on-danger: #ffffff;
+  --color-subtle: var(--color-muted);
+}
+
+[data-theme="catppuccin-mocha"] {
+  color-scheme: dark;
+  --color-canvas: #11111b;
+  --color-surface: #1e1e2e;
+  --color-surface-muted: #181825;
+  --color-surface-hover: #313244;
+  --color-line: #45475a;
+  --color-ink: #cdd6f4;
+  --color-muted: #bac2de;
+  --color-accent: #cba6f7;
+  --color-accent-hover: #b4befe;
+  --color-accent-soft: #313244;
+  --color-on-accent: #1e1e2e;
+  --color-success: #a6e3a1;
+  --color-danger: #f38ba8;
+  --color-danger-hover: #f5b0c4;
+  --color-on-danger: #1e1e2e;
+  --color-subtle: var(--color-muted);
+}
+
+[data-theme="dracula"] {
+  color-scheme: dark;
+  --color-canvas: #191a21;
+  --color-surface: #282a36;
+  --color-surface-muted: #21222c;
+  --color-surface-hover: #343746;
+  --color-line: #44475a;
+  --color-ink: #f8f8f2;
+  --color-muted: #b4b7ca;
+  --color-accent: #bd93f9;
+  --color-accent-hover: #d6acff;
+  --color-accent-soft: #44475a;
+  --color-on-accent: #282a36;
+  --color-success: #50fa7b;
+  --color-danger: #ff5555;
+  --color-danger-hover: #ff6e6e;
+  --color-on-danger: #21222c;
+  --color-subtle: var(--color-muted);
+}
+
+[data-theme="nord"] {
+  color-scheme: dark;
+  --color-canvas: #242933;
+  --color-surface: #2e3440;
+  --color-surface-muted: #292e39;
+  --color-surface-hover: #3b4252;
+  --color-line: #4c566a;
+  --color-ink: #eceff4;
+  --color-muted: #d8dee9;
+  --color-accent: #88c0d0;
+  --color-accent-hover: #8fbcbb;
+  --color-accent-soft: #3b4252;
+  --color-on-accent: #2e3440;
+  --color-success: #a3be8c;
+  --color-danger: #e3a0a7;
+  --color-danger-hover: #efbbc0;
+  --color-on-danger: #2e3440;
+  --color-subtle: var(--color-muted);
+}
+
+[data-theme="solarized-light"] {
+  color-scheme: light;
+  --color-canvas: #eee8d5;
+  --color-surface: #fdf6e3;
+  --color-surface-muted: #eee8d5;
+  --color-surface-hover: #e4dec9;
+  --color-line: #c9c3b1;
+  --color-ink: #073642;
+  --color-muted: #51656b;
+  --color-accent: #6267b4;
+  --color-accent-hover: #5861b1;
+  --color-accent-soft: #eee8d5;
+  --color-on-accent: #ffffff;
+  --color-success: #566600;
+  --color-danger: #b82d2b;
+  --color-danger-hover: #982523;
+  --color-on-danger: #ffffff;
+  --color-subtle: var(--color-muted);
+}
+
+[data-theme="solarized-dark"] {
+  color-scheme: dark;
+  --color-canvas: #002b36;
+  --color-surface: #073642;
+  --color-surface-muted: #002b36;
+  --color-surface-hover: #124653;
+  --color-line: #586e75;
+  --color-ink: #eee8d5;
+  --color-muted: #adbdbd;
+  --color-accent: #2aa198;
+  --color-accent-hover: #8bc8bb;
+  --color-accent-soft: #124653;
+  --color-on-accent: #002b36;
+  --color-success: #b3c865;
+  --color-danger: #ff938e;
+  --color-danger-hover: #ffb4ab;
+  --color-on-danger: #002b36;
+  --color-subtle: var(--color-muted);
+}
+
+[data-theme="gruvbox"] {
+  color-scheme: dark;
+  --color-canvas: #1d2021;
+  --color-surface: #282828;
+  --color-surface-muted: #1d2021;
+  --color-surface-hover: #3c3836;
+  --color-line: #665c54;
+  --color-ink: #ebdbb2;
+  --color-muted: #bdae93;
+  --color-accent: #fabd2f;
+  --color-accent-hover: #fe8019;
+  --color-accent-soft: #3c3836;
+  --color-on-accent: #282828;
+  --color-success: #b8bb26;
+  --color-danger: #fb6b5b;
+  --color-danger-hover: #ff998e;
+  --color-on-danger: #1d2021;
+  --color-subtle: var(--color-muted);
+}
+
+[data-theme="tokyo-night"] {
+  color-scheme: dark;
+  --color-canvas: #16161e;
+  --color-surface: #1a1b26;
+  --color-surface-muted: #16161e;
+  --color-surface-hover: #24283b;
+  --color-line: #414868;
+  --color-ink: #c0caf5;
+  --color-muted: #a9b1d6;
+  --color-accent: #7aa2f7;
+  --color-accent-hover: #89b4fa;
+  --color-accent-soft: #292e42;
+  --color-on-accent: #1a1b26;
+  --color-success: #9ece6a;
+  --color-danger: #f7768e;
+  --color-danger-hover: #ff9aaa;
+  --color-on-danger: #1a1b26;
+  --color-subtle: var(--color-muted);
+}
